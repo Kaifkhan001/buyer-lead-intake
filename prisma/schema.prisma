@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
 }
 
 datasource db {
@@ -45,6 +44,7 @@ model Buyer {
   updatedAt    DateTime      @updatedAt
   createdAt    DateTime      @default(now())
 }
+
 
 model BuyerHistory {
   id        String   @id @default(uuid())
