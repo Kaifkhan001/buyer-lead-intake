@@ -1,6 +1,11 @@
 "use client"
+import LoadingButton from '@/app/components/LoadingButton';
+import prisma from '@/app/utils/prisma';
+import axios from 'axios';
+import { signIn } from 'next-auth/react';
 // pages/signup.tsx
 import { useState, ChangeEvent, FormEvent } from 'react';
+import { toast } from 'sonner';
 
 interface SignUpFormState {
   name: string;
@@ -13,6 +18,7 @@ const SignUpPage = () => {
     email: '',
   });
   const [errors, setErrors] = useState<Partial<SignUpFormState>>({});
+  const [isLoaoding, setIsLoaoding] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,17 +46,34 @@ const SignUpPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async(e: FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
-    // TODO: Add your sign-up logic here
-    alert(`Signing up with name: ${formData.name} and email: ${formData.email}`);
+    try {
+      setIsLoaoding(true);
+      const res = await axios.post("/api/auth/signup", formData);
+      if(res.status === 201){
+       toast.success(res.data.message);
+       await signIn("credentials", {
+        redirect: true,
+        email: formData.email,
+        callbackUrl: "/dashboard"
+       });
+      }
+    } catch (error) {
+      console.log("Error catched in the fronend while signing up", error);
+      return;
+    }finally{
+      setIsLoaoding(false);
+    }
+    
+
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0f172a] px-4">
+    <div className="lg:h-[120vh] h-[80vh] flex items-center justify-center bg-[#0f172a] px-4">
       <div className="max-w-md w-full bg-[#1e293b] p-8 rounded-xl shadow-lg shadow-cyan-700/50">
         <h2 className="text-3xl font-extrabold text-cyan-400 text-center mb-8 tracking-wide">
           Sign Up
@@ -101,12 +124,16 @@ const SignUpPage = () => {
             )}
           </div>
 
-          <button
+          {isLoaoding ? (
+            <LoadingButton/>
+          ) : (
+            <button
             type="submit"
             className="w-full bg-cyan-500 hover:bg-cyan-600 transition text-[#0f172a] font-semibold py-3 rounded-lg shadow-md shadow-cyan-600/50"
           >
             Sign Up
           </button>
+          )}
         </form>
 
         <p className="mt-8 text-center text-cyan-300 text-sm">
